@@ -4,56 +4,65 @@ import seaborn as sns
 from shared import app_dir, languages, jobs
 from shiny.express import input, render, ui
 
-ui.page_opts(title="104 Software Jobs")
+ui.page_opts(title="104 Software Jobs", fillable= True)
 
 ui.nav_spacer()  # Push the navbar items to the right
 
-footer = ui.input_select(
-    "var", "Select variable", choices=["bill_length_mm", "body_mass_g"]
-)
-
 with ui.nav_panel("Jobs"):
+
+    with ui.card(): 
     
-    with ui.layout_sidebar():
-        with ui.sidebar():
-            ui.input_selectize(
-                "selected_cities",
-                "City",
-                list(jobs["County City"].unique()),
-                selected=["Taipei City", "New Taipei City"],
-                multiple=True,
-            )
+        with ui.layout_sidebar():    
+            with ui.sidebar():
+                ui.input_selectize(
+                    "selected_cities",
+                    "City",
+                    list(jobs["County City"].unique()),
+                    selected=["Taipei City", "New Taipei City"],
+                    multiple=True,
+                )
 
-            ui.input_selectize(
-                "edu_level",
-                "Highest Education Level",
-                ["Highschool", "Technical school", "Undergraduate", "Master's", "PhD"],
-                selected=["Undergraduate"],
-                multiple=False,
-            )
+                ui.input_selectize(
+                    "edu_level",
+                    "Highest Education Level",
+                    ['Not Specified',"Highschool", "Technical school", "Undergraduate", "Master's", "PhD"],
+                    selected=["Not Specified"],
+                    multiple=False,
+                )
 
-            ui.input_selectize(
-                "full_part_time",
-                "Work Type",
-                ["Full-time", "Part-time"],
-                selected=["Full-time"],
-                multiple=False,
-            )
-
-        @render.data_frame
-        def jobs_df():
-            jobs_filtered = jobs
-            jobs_filtered = jobs_filtered[
-                jobs_filtered["Education Requirements"].str.contains(input.edu_level())
-            ]
-            jobs_filtered = jobs_filtered[
-                jobs_filtered["Work Nature"].str.contains(input.full_part_time())
-            ]
-            if input.selected_cities():
+                ui.input_selectize(
+                    "full_part_time",
+                    "Work Type",
+                    ["Full-time", "Part-time"],
+                    selected=["Full-time"],
+                    multiple=False,
+                )
+                
+                ui.input_selectize(
+                    "selected_languages_jobs",
+                    "Language",
+                    list(languages["Language"].unique()),
+                    multiple=True)
+            
+            @render.data_frame
+            def jobs_df():
+                jobs_filtered = jobs.drop(columns=['Working Experience'])
+                if 'Not Specified' not in input.edu_level():
+                    jobs_filtered = jobs_filtered[
+                        jobs_filtered["Education Requirements"].str.contains(input.edu_level())
+                    ]
                 jobs_filtered = jobs_filtered[
-                    jobs_filtered["County City"].isin(input.selected_cities())
+                    jobs_filtered["Work Nature"].str.contains(input.full_part_time())
                 ]
-            return render.DataGrid(jobs_filtered, filters=True)
+                if input.selected_cities():
+                    jobs_filtered = jobs_filtered[
+                        jobs_filtered["County City"].isin(input.selected_cities())
+                    ]
+                if input.selected_languages_jobs():
+                    jobs_filtered = jobs_filtered[
+                        jobs_filtered["Proficiency in tools"].str.contains("|".join(list(input.selected_languages_jobs())))
+                    ]
+                return render.DataGrid(jobs_filtered, filters=True)
 
 
 with ui.nav_panel("Languages in Demand"):
