@@ -1,4 +1,5 @@
 import seaborn as sns
+import re
 
 # Import data from shared.py
 from shared import app_dir, languages, jobs
@@ -59,8 +60,10 @@ with ui.nav_panel("Jobs"):
                         jobs_filtered["County City"].isin(input.selected_cities())
                     ]
                 if input.selected_languages_jobs():
+                    escaped_languages = [re.escape(lang) for lang in input.selected_languages_jobs()]
+                    pattern = "|".join(escaped_languages)
                     jobs_filtered = jobs_filtered[
-                        jobs_filtered["Proficiency in tools"].str.contains("|".join(list(input.selected_languages_jobs())))
+                        jobs_filtered["Proficiency in tools"].str.contains(pattern)
                     ]
                 return render.DataGrid(jobs_filtered, filters=True)
 
